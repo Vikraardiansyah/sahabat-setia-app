@@ -137,7 +137,7 @@ class Home extends Component {
         </Container>
         <Container>
           <Row>
-            <Col style={{fontWeight: "bold", fontSize: "20px"}}>LIST BOOKS<hr/></Col>
+            <Col style={{fontWeight: "bold", fontSize: "20px"}}>BOOK LISTS<hr/></Col>
           </Row>
         </Container>
         <Container >
