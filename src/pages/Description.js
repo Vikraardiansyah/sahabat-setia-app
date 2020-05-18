@@ -3,7 +3,7 @@ import qs from 'querystring'
 import {Image} from 'react-bootstrap'
 import ModalEdit from '../components/ModalEdit'
 import ModalsDelete from '../components/ModalsDelete'
-import {deleteBook, borrowBook, postBorrow, putBorrow} from '../utils/http'
+import {deleteBook, borrowBook, postBorrow, putBorrow, postOrder} from '../utils/http'
 import Loading from '../images/loading.gif'
 import {connect} from 'react-redux'
 import {getBookByIdActionCreator} from '../redux/actions/getBookById'
@@ -122,6 +122,15 @@ class Description extends Component {
         }
     }
 
+    postOrder = async () => {
+        const {id} = this.props.match.params
+        await postOrder(qs.stringify({
+            id_book: id,
+            id_user: this.props.login.response.id,
+        }))
+        this.getBookById()
+    }
+
     render() {
         const {isLoading, isFulfilled, isRejected, response} = this.props.getBookById
         const {role, email} = this.props.login.response
@@ -140,7 +149,7 @@ class Description extends Component {
                     <div className="title">{response.title}</div> 
                     <div className="description">{response.description}</div>
                 </div>
-                {response.id_status === 1 && role === 2 ? <div className="badge-borrow" onClick={this.handleBorrow}>Borrow</div> : response.id_status === 2 && response.email_borrow === email ? <div className="badge-return" onClick={this.handleBorrow}>Return</div> : role === 2 ? <div className="badge-borrow-disabled" >Borrow</div> : <></>}
+                {response.id_status === 1 && role === 2 ? <div className="badge-borrow" onClick={this.handleBorrow}>Borrow</div> : response.id_status === 2 && response.email_borrow === email ? <div className="badge-return" onClick={this.handleBorrow}>Return</div> : role === 2 ? <div className="badge-return" onClick={this.postOrder}>Order</div> : <></>}
                 </div> : <img src={Loading} alt="loading" style={{display: "block", margin: "auto"}}></img>}
                 {isRejected ? this.auth() : ""}
             </>
