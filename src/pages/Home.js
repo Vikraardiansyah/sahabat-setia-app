@@ -1,25 +1,31 @@
 import React, {Component} from 'react'
-import {getBooks} from '../utils/http'
-import {Container, Row, Col, Card, DropdownButton, Dropdown, ButtonGroup, Image} from'react-bootstrap'
+import {Container, Row, Col, Card, Image, Form} from'react-bootstrap'
 import '../styles/Home.css'
 import qs from 'querystring'
 import NavbarComp from '../components/NavbarComp'
 import ModalAdd from '../components/ModalAdd'
 import Paginations from '../components/Paginations'
+import Carousel from '../components/Carousel'
 import Loading from '../images/loading.gif'
+import {connect} from 'react-redux'
+import {getBooksActionCreator} from '../redux/actions/getBooks'
+import {logoutActionCreator} from '../redux/actions/logout'
+import {getAuthorActionCreator} from '../redux/actions/author'
+import {getGenreActionCreator} from '../redux/actions/genre'
+import {getStatusActionCreator} from '../redux/actions/status'
 
 class Home extends Component {
+
   state = {
-    data : [],
-    pagination : {},
     error: {},
-    role: atob(localStorage.getItem("role")),
-    isLoading: false,
   }
-  componentDidMount(){
-    this.getBooks()
-    this.auth()
+  async componentDidMount(){
+    const {getBooksAction, getAuthorAction, getGenreAction, getStatusAction} = this.props
     localStorage.setItem("lastPage", "/")
+    await getBooksAction()
+    await getAuthorAction()
+    await getGenreAction()
+    await getStatusAction()
   }
   componentDidUpdate(_, prevState){
     if(prevState !== this.state){
@@ -43,62 +49,58 @@ class Home extends Component {
       this.props.history.push(query)
     }
   }
-  auth = () => {
-    if(!localStorage.getItem("token")) {
-      this.props.history.push("/login")
-    }
-  }
+  
   home = () => {
     this.props.history.push("/")
   }
-  logout = () => {
+  logout = async () => {
+    const {logoutAction, history} = this.props
+    await logoutAction()
     localStorage.clear()
-    this.props.history.push("/login")
+    history.push("/login")
   }
-  getBooks = async () => { 
-    await getBooks(qs.stringify(this.state))
-    .then((response) => {
-      this.setState({
-        data : response.data.data,
-        pagination : response.data.pagination,
-        isLoading: true
-      })
-    })
-    .catch((error) => {
-      this.setState({
-        error: error.response.data.data.message
-      })
-      if(this.state.error === "TokenExpiredError"){
-        this.props.history.push("/token")
-      } else if (this.state.error === "JsonWebTokenError") {
-        this.props.history.push("/login")
-      }
-    })
+
+  manage = () => {
+    this.props.history.push("/manage")
+  }
+
+  history = () => {
+    this.props.history.push("/history")
+  }
+
+  getBooks = async () => {
+    const {getBooksAction} = this.props
+    await getBooksAction(qs.stringify(this.state))
   }
   
   getById = (id) => {
     this.props.history.push(`/description/${id}`)
   }
 
-  handlePage = async (e) => {
+  handlePage = (e) => {
       this.setState({
           page: e.target.id
       }, () => this.getBooks())
   }
-  handleLimit = async (e) => {
+  handleLimit =  (e) => {
     this.setState({
       limit: e.target.id
-    }, () => this.getBooks())
+    },() =>this.getBooks())
 }
 
-  handleSort = async (e) => {
+  handleValue =  (e) => {
     this.setState({
-      value: e.target.id,
-      sort: e.target.name
+      value: e.target.value
+    }, () => this.getBooks())
+  }
+
+  handleSort =  (e) => {
+    this.setState({
+      sort: e.target.value
     }, () => this.getBooks())
   }
   
-  handleSearch = async (e) => {
+  handleSearch =  (e) => {
     this.setState({
       search: e.target.value
     }, () => this.getBooks())
@@ -107,42 +109,50 @@ class Home extends Component {
   
 
   render(){
-    const {data, isLoading, pagination, role} = this.state
+    const {role} = this.props.login.response
+    const {getBooksResponse, isLoading, isFulfilled} = this.props.getBooks
     return (
       <>
-        <NavbarComp logout={this.logout} search={this.handleSearch} home={this.home}/>
-        <Container style={{marginTop: "60px"}} >
+        <NavbarComp logout={this.logout} search={this.handleSearch} home={this.home} manage={this.manage} history={this.history}/>
+        <Container style={{marginTop: "50px", marginBottom: "50px"}}>
+          <Carousel/>
+        </Container>
+        <Container >
         <Row>
-          <Col lg={3} style={{marginTop: "10px"}} >
-          <ButtonGroup key="ButtonGroup">
-          {role === "1" ? <ModalAdd getBooks={this.getBooks}/> : <></>}
-            <DropdownButton id="dropdown-basic-button" variant="secondary" title="Sort By" size="sm">
-              <Dropdown.Item id="" name="" onClick={this.handleSort}>Last Update</Dropdown.Item>
-              <Dropdown.Item id="books.title" name="true" onClick={this.handleSort}>Title (A-Z)</Dropdown.Item>
-              <Dropdown.Item id="books.title" name="false" onClick={this.handleSort}>Title (Z-A)</Dropdown.Item>
-              <Dropdown.Item id="author.author" name="true" onClick={this.handleSort}>Author (A-Z)</Dropdown.Item>
-              <Dropdown.Item id="author.author" name="false" onClick={this.handleSort}>Author (Z-A)</Dropdown.Item>
-            </DropdownButton>
-            <DropdownButton id="dropdown-basic-button" title="Show Data" variant="dark" size="sm">
-              <Dropdown.Item id="6" onClick={this.handleLimit} >6</Dropdown.Item>
-              <Dropdown.Item id="12" onClick={this.handleLimit} >12</Dropdown.Item>
-              <Dropdown.Item id="24" onClick={this.handleLimit} >24</Dropdown.Item>
-            </DropdownButton>
-          </ButtonGroup>
-          </Col>
-          <Col key="pagination" style={{marginTop: "10px"}}>
-            {isLoading ? <Paginations page={pagination.page} next={pagination.next} previous={pagination.previous} totalPage={pagination.totalPage} handlePage={this.handlePage}/> : <></>}
+          <Col >
+            <Form.Group >
+              <Form.Control as="select" size="sm" onChange={this.handleValue}>
+                <option value="" >Sort By</option>
+                <option value="">Default</option>
+                <option value="books.title">Title</option>
+                <option value="author.author">Author</option>
+              </Form.Control>
+            </Form.Group>
+            </Col>
+            <Col>
+            <Form.Group>
+              <Form.Control as="select" size="sm" onChange={this.handleSort}>
+                <option value="true">A-Z</option>
+                <option value="false">Z-A</option>
+              </Form.Control>
+            </Form.Group>
+            </Col>
+          <Col key="pagination">
+            <Paginations handlePage={this.handlePage}/>
+          </Col >
+          <Col xl={{offset: 6}}>
+            {role === 1 ? <ModalAdd getBooks={this.getBooks}/> : <></>}
           </Col>
           </Row>
         </Container>
         <Container>
           <Row>
-            <Col style={{fontWeight: "bold", fontSize: "20px"}}>BOOK LISTS<hr/></Col>
+            <Col style={{fontWeight: "bold", fontSize: "20px"}}>LIST BOOKS<hr/></Col>
           </Row>
         </Container>
         <Container >
           <Row>
-            { isLoading ? data.map(data => 
+            {!isLoading && isFulfilled ? getBooksResponse.map(data => 
             <Col lg={2} xs={6} key={data.id} style={{textAlign: "center", cursor: "pointer"}} onClick={() => this.getById(data.id)}>
               <Image src={`${process.env.REACT_APP_URL}/${data.image}`} style={{height: "200px"}} rounded />
               <Card style={{border: "none"}} >
@@ -161,4 +171,35 @@ class Home extends Component {
     )
   }
 }
-export default Home;
+
+const mapStateToProps = ({
+  getBooks,
+  login,
+}) => {
+  return {
+    getBooks,
+    login,
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    getBooksAction: (data) => {
+      dispatch(getBooksActionCreator(data))
+    },
+    logoutAction: () => {
+      dispatch(logoutActionCreator())
+    },
+    getAuthorAction: () => {
+      dispatch(getAuthorActionCreator())
+    },
+    getGenreAction: () => {
+      dispatch(getGenreActionCreator())
+    },
+    getStatusAction: () => {
+      dispatch(getStatusActionCreator())
+    },
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);

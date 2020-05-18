@@ -86,8 +86,8 @@ export const deleteBook = (id) => {
     
 }
 
-export const borrowBook = (id, data) => {
-  return Axios.put(`${process.env.REACT_APP_URL}/books/user/${id}`, data,
+export const borrowBook = (id, body) => {
+  return Axios.put(`${process.env.REACT_APP_URL}/books/user/${id}`, body,
   {
       headers : {
         "Authorization" : localStorage.getItem("token")
@@ -95,3 +95,56 @@ export const borrowBook = (id, data) => {
     })
 }
 
+export const getBorrow = () => {
+  return Axios.get(`${process.env.REACT_APP_URL}/borrow`,
+  {
+    headers : {
+      "Authorization" : localStorage.getItem("token")
+    }
+  })
+}
+
+export const getBorrowById = (id) => {
+  return Axios.get(`${process.env.REACT_APP_URL}/borrow/${id}`,
+  {
+    headers : {
+      "Authorization" : localStorage.getItem("token")
+    }
+  })
+}
+
+export const postBorrow = (body) => {
+  return Axios.post(`${process.env.REACT_APP_URL}/borrow`, body,
+  {
+    headers : {
+      "Authorization" : localStorage.getItem("token")
+    }
+  })
+}
+
+export const putBorrow = (body) => {
+  return Axios.put(`${process.env.REACT_APP_URL}/borrow`, body,
+  {
+    headers : {
+      "Authorization" : localStorage.getItem("token")
+    }
+  })
+}
+
+export const getOrder = () => {
+  return Axios.get(`${process.env.REACT_APP_URL}/order`,
+  {
+    headers : {
+      "Authorization" : localStorage.getItem("token")
+    }
+  })
+}
+
+export const postOrder = (body) => {
+  return Axios.post(`${process.env.REACT_APP_URL}/order`, body,
+  {
+    headers : {
+      "Authorization" : localStorage.getItem("token")
+    }
+  })
+}

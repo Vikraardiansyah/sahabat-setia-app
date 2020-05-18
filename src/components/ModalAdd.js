@@ -1,6 +1,8 @@
 import React, {Component} from 'react'
-import {Button, Modal, Form, Alert} from 'react-bootstrap'
-import {getAuthor, getGenre, getStatus, postBook} from '../utils/http'
+import {Button, Modal, Form} from 'react-bootstrap'
+import {postBook} from '../utils/http'
+import '../styles/Modal.css'
+import {connect} from 'react-redux'
 
 
 class ModalAdd extends Component {
@@ -8,28 +10,27 @@ class ModalAdd extends Component {
 
     state = {
         show: false,
-        authorLoad: false,
-        genreLoad: false,
-        statusLoad: false,
-        fillData: false,
-        imageFilter: false
+        imageFilter: false,
+        validated: false
     }
 
-    
-    componentDidMount(){
-      this.getAuthor()
-      this.getGenre()
-      this.getStatus()
+    handleSubmit = (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (form.checkValidity() === false) {
+        event.preventDefault();
+        event.stopPropagation();
+      } else{
+        this.postBook()
+      }
+      this.setState({
+        validated: true
+      })
     }
 
     postBook = async () => {
       const form = new FormData()
       const {title, description, id_author, id_genre, id_status, image} = this.state
-      if(title === undefined || description === undefined || id_author === undefined || id_genre === undefined || id_status === undefined || image === undefined){
-        this.setState({
-          fillData: true
-        })
-      } else {
         form.append("title", title)
         form.append("description", description)
         form.append("id_author", id_author)
@@ -38,58 +39,11 @@ class ModalAdd extends Component {
         form.append("image", image)
         await postBook(form)
         .then((response) => {
-          console.log(response)
           this.handleClose()
           this.props.getBooks()
         })
         .catch((error) => {
-          this.setState({
-            error: error.response.data.status
-          })
-          if(this.state.error === 500){
-            this.setState({
-              fillData: true
-            })
-          } else {
-            this.setState({
-              imageFilter: true
-            })
-          }
         })
-      }
-    }
-    
-    getAuthor = async () => {
-      await getAuthor()
-      .then((response) => {
-        this.setState({
-          dataAuthor: response.data.data,
-          authorLoad: true
-        })
-      })
-      .catch((error) => console.log(error))
-    }
-
-    getGenre = async () => {
-      await getGenre()
-      .then((response) => {
-        this.setState({
-          dataGenre: response.data.data,
-          genreLoad: true
-        })
-      })
-      .catch((error) => console.log(error))
-    }
-
-    getStatus = async () => {
-      await getStatus()
-      .then((response) => {
-        this.setState({
-          dataStatus: response.data.data,
-          statusLoad: true
-        })
-      })
-      .catch((error) => console.log(error))
     }
 
     handleClose = () => {
@@ -104,42 +58,80 @@ class ModalAdd extends Component {
             show: true
         })
     }
-
-    addTitle = (e) => {
+    handleChange = (e) => {
+      const {name, value} = e.target
       this.setState({
-        title: e
-      })
-    }
-    addDescription = (e) => {
-      this.setState({
-        description: e
-      })
-    }
-    addAuthor = (e) => {
-      this.setState({
-        id_author: e
-      })
-    }
-    addGenre = (e) => {
-      this.setState({
-        id_genre: e
-      })
-    }
-    addStatus = (e) => {
-      this.setState({
-        id_status: e
+        [name]: value
       })
     }
     addImage = (e) => {
       this.setState({
-        image: e
+        imageFilter: ""
       })
+      var files = e.target.files
+        if(this.checkFileSize(e) && this.checkMimeType(e)){ 
+        // if return true allow to setState
+        this.setState({
+          image: files[0]
+      })
+      console.log(this.state.image)
+     }
     }
+  
+    checkMimeType=(e)=>{
+      //getting file object
+      let files = e.target.files 
+      //define message container
+      let err = ''
+      // list allow mime type
+     const types = ['image/png', 'image/jpeg', 'image/jpg']
+      // loop access array
+      for(let x = 0; x<files.length; x++) {
+       // compare file type find doesn't matach
+           if (types.every(type => files[x].type !== type)) {
+           // create error message and assign to container   
+           err += 'is not a supported format, please pick image';
+         }
+       };
+    
+     if (err !== '') { // if message not same old that mean has error 
+          e.target.value = null // discard selected file
+          this.setState({
+            imageFilter: err
+          })
+           return false; 
+      }
+     return true;
+    
+    }
+  
+    checkFileSize=(e)=>{
+      let files = e.target.files
+      let size = 1000000
+      let err = ""; 
+      for(let x = 0; x<files.length; x++) {
+      if (files[x].size > size) {
+       err += 'is too large, please pick a smaller file';
+     }
+   };
+   if (err !== '') {
+      e.target.value = null
+      this.setState({
+        imageFilter: err
+      })
+      return false
+  }
+  
+  return true;
+  
+  }
     
     render() {
+      const {validated, imageFilter} = this.state
+      const {author, genre, status} = this.props
     return (
       <>
-        <Button variant="light" onClick={this.handleShow} size="sm" style={{height: "31px"}}>
+        <Button variant="primary" onClick={this.handleShow} size="sm" style={{height: "31px"}}>
           Add
         </Button>
   
@@ -147,63 +139,55 @@ class ModalAdd extends Component {
           <Modal.Header closeButton>
             <Modal.Title>Add Book</Modal.Title>
           </Modal.Header>
-          <Form >
+          <Form onSubmit={this.handleSubmit} validated={validated} noValidate>
           <Modal.Body>
-            {this.state.fillData ? <Alert variant="danger">
-              Fill in all forms
-            </Alert> : <></>}
             <Form.Group controlId="exampleForm.ControlInput1">
                 <Form.Label>Title</Form.Label>
-                <Form.Control type="text" placeholder="title" onChange={(e)=> {this.addTitle(e.target.value)}} required/>
+                <Form.Control type="text" name="title" placeholder="title" onChange={this.handleChange} required/>
             </Form.Group>
             <Form.Group controlId="exampleForm.ControlInput1">
                 <Form.Label>Description</Form.Label>
-                <Form.Control type="textarea" as="textarea" placeholder="description" rows="3" onChange={(e) => {this.addDescription(e.target.value)}} required/>
+                <Form.Control type="textarea" name="description" as="textarea" placeholder="description" rows="3" onChange={this.handleChange} required/>
             </Form.Group>
             <Form.Group controlId="exampleForm.ControlSelect2">
                 <Form.Label>Author</Form.Label>
-                <Form.Control as="select" onChange={(e) => {this.addAuthor(e.target.value)}} required>
-                <option>--Choose Author--</option>
-                  {this.state.authorLoad ? this.state.dataAuthor.map(author => 
-                  <option key={author.id} value={author.id}>{author.author}</option>) : <></>
-                  }
+                <Form.Control as="select" name="id_author" onChange={this.handleChange} required>
+                <option value="">--Choose Author--</option>
+                  {author.response.map(author => 
+                  <option key={author.id} value={author.id}>{author.author}</option>)}
                 </Form.Control>
             </Form.Group>
             <Form.Group controlId="exampleForm.ControlSelect2">
                 <Form.Label>Genre</Form.Label>
-                <Form.Control as="select" onChange={(e) => {this.addGenre(e.target.value)}} required>
-                <option>--Choose Genre--</option>
-                  {this.state.genreLoad ? this.state.dataGenre.map(genre => 
-                  <option key={genre.id} value={genre.id}>{genre.genre}</option>) : <></>
-                  }
+                <Form.Control as="select" name="id_genre" onChange={this.handleChange} required>
+                <option value="">--Choose Genre--</option>
+                  {genre.response.map(genre => 
+                  <option key={genre.id} value={genre.id}>{genre.genre}</option>)}
                 </Form.Control>
             </Form.Group>
             <Form.Group controlId="exampleForm.ControlSelect2">
                 <Form.Label>Status</Form.Label>
-                <Form.Control as="select" onChange={(e) => {this.addStatus(e.target.value)}} required>
-                <option>--Choose Status--</option>
-                {this.state.statusLoad ? this.state.dataStatus.map(status => 
-                  <option key={status.id} value={status.id}>{status.status}</option>) : <></>
-                  }
+                <Form.Control as="select" name="id_status" onChange={this.handleChange} required>
+                <option value="">--Choose Status--</option>
+                  {status.response.map(status => 
+                  <option key={status.id} value={status.id}>{status.status}</option>)}
                 </Form.Control>
             </Form.Group>
             <Form.Group>
                 <Form.File id="formcheck-api-regular">
                     <Form.File.Label>
                       Image
-                      {this.state.imageFilter ? <Alert variant="danger">
-                        File not image or file too large
-                      </Alert> : <></>}
                     </Form.File.Label>
-                    <Form.File.Input type="file" onChange={(e) => {this.addImage(e.target.files[0])}} accept="image/*" required/>
+                    <Form.File.Input type="file" onChange={this.addImage} accept="image/png, image/jpg, image/jpeg" required/>
                 </Form.File>
+                {imageFilter ? <span className="error">{imageFilter}</span> : ""}
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" type="button" onClick={() => {this.postBook()}}>
+            <Button variant="secondary" type="submit" >
               Add
             </Button>
-            <Button variant="primary" type="button" onClick={this.handleClose}>
+            <Button variant="primary" onClick={this.handleClose}>
               Close
             </Button>
           </Modal.Footer>
@@ -213,5 +197,19 @@ class ModalAdd extends Component {
     );
   }
 }
+
+const mapStateToProps = ({
+  author,
+  genre,
+  status
+}) => {
+  return {
+    author,
+    genre,
+    status
+  }
+}
+
+
   
-export default ModalAdd
+export default connect(mapStateToProps)(ModalAdd)

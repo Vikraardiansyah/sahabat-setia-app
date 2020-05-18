@@ -1,12 +1,14 @@
 import React, {Component} from 'react'
 import {Pagination} from 'react-bootstrap'
+import {connect} from 'react-redux'
 
 
 class Paginations extends Component {
 
 
     render() {
-        const {page, totalPage, handlePage, previous, next} = this.props
+        const {page, totalPage, previous, next} = this.props.getBooks.paginationResponse
+        const {handlePage} = this.props
         const active = page;
         const items = [];
         for (let number = 1; number <= totalPage; number++) {
@@ -14,7 +16,7 @@ class Paginations extends Component {
             <Pagination.Item onClick={handlePage} key={number} id={number} active={number === active}>
             {number}
             </Pagination.Item>,
-        );
+        )
         }
         return(
             <>
@@ -30,4 +32,12 @@ class Paginations extends Component {
     }
 }
 
-export default Paginations
+const mapStateToProps = ({
+    getBooks,
+  }) => {
+    return {
+      getBooks,
+    }
+  }
+
+export default connect(mapStateToProps)(Paginations)

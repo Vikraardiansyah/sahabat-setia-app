@@ -1,5 +1,6 @@
 import React, {Component} from 'react'
 import {Button, Modal} from 'react-bootstrap'
+import '../styles/Description.css'
 
 class ModalsDelete extends Component {
   state = {
@@ -17,9 +18,9 @@ class ModalsDelete extends Component {
   render(){
     return (
       <>
-        <Button variant="danger" onClick={this.handleShow} size="sm">
+        <div onClick={this.handleShow} className="delete">
           Delete
-        </Button>
+        </div>
   
         <Modal show={this.state.show} onHide={this.handleClose}>
           <Modal.Header closeButton>
