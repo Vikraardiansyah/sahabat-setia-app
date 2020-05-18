@@ -84,7 +84,7 @@ class Home extends Component {
   }
   handleLimit =  (e) => {
     this.setState({
-      limit: e.target.id
+      limit: e.target.value
     },() =>this.getBooks())
 }
 
@@ -134,6 +134,14 @@ class Home extends Component {
               <Form.Control as="select" size="sm" onChange={this.handleSort}>
                 <option value="true">A-Z</option>
                 <option value="false">Z-A</option>
+              </Form.Control>
+            </Form.Group>
+            </Col>
+            <Col>
+            <Form.Group>
+              <Form.Control as="select" size="sm" onChange={this.handleLimit}>
+                <option value="6">6</option>
+                <option value="12">12</option>
               </Form.Control>
             </Form.Group>
             </Col>
