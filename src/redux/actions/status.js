@@ -1,9 +1,9 @@
-import {getStatusAction} from './actionTypes'
-import {getStatus} from '../../utils/http'
+import { getStatusAction } from "./actionTypes";
+import { getStatus } from "../../utils/http";
 
-export const getStatusActionCreator = (headers) => {
-        return {
-            type: getStatusAction,
-            payload: getStatus(headers)
-        }
-}
+export const getStatusActionCreator = (token) => {
+  return {
+    type: getStatusAction,
+    payload: getStatus(token),
+  };
+};

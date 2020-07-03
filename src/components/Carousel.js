@@ -1,78 +1,62 @@
-import React, {Component} from 'react'
-import {Carousel} from 'react-bootstrap'
-import {connect} from 'react-redux'
+import React, { Component } from "react";
+import Carousel from "react-multi-carousel";
+import "react-multi-carousel/lib/styles.css";
+import { connect } from "react-redux";
 
-class ControlledCarousel extends Component {
-  state = {
-    index: 0
-  }
+const responsive = {
+  desktop: {
+    breakpoint: { max: 3000, min: 1024 },
+    items: 3,
+  },
+  tablet: {
+    breakpoint: { max: 1024, min: 464 },
+    items: 3,
+  },
+  mobile: {
+    breakpoint: { max: 464, min: 0 },
+    item: 3,
+  },
+};
 
-  handleSelect = (selectedIndex, e) => {
-    this.setState({
-      index: selectedIndex
-    })
-  };
+class CarouselComp extends Component {
   render() {
-    const {isLoading, isFulfilled, getBooksResponse} = this.props.getBooks
-  return (
-    <>
-    {!isLoading && isFulfilled ? <Carousel activeIndex={this.state.index} onSelect={this.handleSelect} >
-    <Carousel.Item>
-        <img
-          className="d-block w-100"
-          src={`${process.env.REACT_APP_URL}/${getBooksResponse[0].image}`}
-          alt="First slide"
-          style={{objectFit: "cover", maxHeight: "300px"}}
-        />
-        <Carousel.Caption > 
-        <h3>{getBooksResponse[0].title}</h3>
-          <p>
-            {getBooksResponse[0].author}
-          </p>
-        </Carousel.Caption>
-      </Carousel.Item>
-      <Carousel.Item>
-        <img
-          className="d-block w-100"
-          src={`${process.env.REACT_APP_URL}/${getBooksResponse[0].image}`}
-          alt="Second slide"
-          style={{objectFit: "cover", maxHeight: "300px"}}
-        />
-
-        <Carousel.Caption >
-          <h3>{getBooksResponse[0].title}</h3>
-          <p>
-            {getBooksResponse[0].author}
-          </p>
-        </Carousel.Caption>
-      </Carousel.Item>
-      <Carousel.Item>
-        <img
-          className="d-block w-100"
-          src={`${process.env.REACT_APP_URL}/${getBooksResponse[0].image}`}
-          alt="Third slide"
-          style={{objectFit: "cover", maxHeight: "300px"}}
-        />
-
-        <Carousel.Caption >
-          <h3>{getBooksResponse[0].title}</h3>
-          <p>
-            {getBooksResponse[0].author}
-          </p>
-        </Carousel.Caption>
-      </Carousel.Item>
-    </Carousel> : <></>}
-    </>
-  );
+    const { resBooksByRecommended } = this.props.books;
+    return (
+      <div
+        style={{
+          marginTop: "30px",
+          marginBottom: "30px",
+          marginLeft: "4vw",
+          marginRight: "4vw",
+        }}
+      >
+        <Carousel responsive={responsive}>
+          {resBooksByRecommended.map((data) => (
+            <div>
+              <img
+                src={`${process.env.REACT_APP_URL}/${data.image}`}
+                alt={`${data.name}`}
+                style={{
+                  width: "30vw",
+                  height: "15vw",
+                  borderRadius: "10px",
+                  objectFit: "cover",
+                  cursor: "pointer",
+                }}
+                onClick={() => this.props.getById(data.id, `recommended`)}
+              />
+            </div>
+          ))}
+        </Carousel>
+      </div>
+    );
   }
 }
 
-const mapStateToProps = ({
-  getBooks
-}) => {
+const mapStateToProps = ({ books }) => {
   return {
-    getBooks
-  }
-}
+    books,
+  };
+};
 
-export default connect(mapStateToProps)(ControlledCarousel)
+export default connect(mapStateToProps)(CarouselComp);

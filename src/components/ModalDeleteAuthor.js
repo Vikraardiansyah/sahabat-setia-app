@@ -1,30 +1,36 @@
 import React, { Component } from "react";
 import { Button, Modal, Form } from "react-bootstrap";
-import "../styles/Description.css";
+import { connect } from "react-redux";
+import { deleteAuthorActionCreator } from "../redux/actions/author";
 
-class ModalsDelete extends Component {
+class ModalsDeleteAuthor extends Component {
   state = {
     show: false,
   };
+
   handleClose = () =>
     this.setState({
       show: false,
     });
+
   handleShow = () =>
     this.setState({
       show: true,
     });
 
-  home = () => {
-    this.props.history.push("/");
+  deleteAuthor = async () => {
+    const { id, deleteAuthorAction } = this.props;
+    const { token } = this.props.login;
+    await deleteAuthorAction(id, token);
+    this.handleClose();
   };
 
   render() {
     return (
       <>
-        <div onClick={this.handleShow} className="delete">
+        <Button variant="danger" size="sm" onClick={this.handleShow}>
           Delete
-        </div>
+        </Button>
 
         <Modal show={this.state.show} onHide={this.handleClose} size="sm">
           <Modal.Header closeButton>
@@ -33,11 +39,7 @@ class ModalsDelete extends Component {
               <Button
                 variant="primary"
                 type="button"
-                onClick={() => {
-                  this.props.delete();
-                  this.handleClose();
-                  this.home();
-                }}
+                onClick={this.deleteAuthor}
                 style={{ marginLeft: "130px" }}
               >
                 Yes
@@ -56,4 +58,19 @@ class ModalsDelete extends Component {
     );
   }
 }
-export default ModalsDelete;
+
+const mapStateToProps = ({ login }) => {
+  return {
+    login,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    deleteAuthorAction: (id, token) => {
+      dispatch(deleteAuthorActionCreator(id, token));
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(ModalsDeleteAuthor);

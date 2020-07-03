@@ -1,16 +1,40 @@
-import {getBorrowAction, getBorrowByIdAction} from './actionTypes'
-import {getBorrow, getBorrowById} from '../../utils/http'
+import {
+  getBorrowAction,
+  getBorrowByIdAction,
+  postBorrowAction,
+  putBorrowAction,
+} from "./actionTypes";
+import {
+  getBorrow,
+  getBorrowById,
+  postBorrow,
+  putBorrow,
+} from "../../utils/http";
 
-export const getBorrowActionCreator = () => {
-        return {
-            type: getBorrowAction,
-            payload: getBorrow()
-        }
-}
+export const getBorrowActionCreator = (token) => {
+  return {
+    type: getBorrowAction,
+    payload: getBorrow(token),
+  };
+};
 
-export const getBorrowByIdActionCreator = (id) => {
-    return {
-        type: getBorrowByIdAction,
-        payload: getBorrowById(id)
-    }
-}
+export const getBorrowByIdActionCreator = (id, token) => {
+  return {
+    type: getBorrowByIdAction,
+    payload: getBorrowById(id, token),
+  };
+};
+
+export const postBorrowActionCreator = (body, token) => {
+  return {
+    type: postBorrowAction,
+    payload: postBorrow(body, token),
+  };
+};
+
+export const putBorrowActionCreator = (body, token) => {
+  return {
+    type: putBorrowAction,
+    payload: putBorrow(body, token),
+  };
+};

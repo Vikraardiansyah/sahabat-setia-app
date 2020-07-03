@@ -1,178 +1,244 @@
-import React, { Component } from 'react'
-import qs from 'querystring'
-import {Image} from 'react-bootstrap'
-import ModalEdit from '../components/ModalEdit'
-import ModalsDelete from '../components/ModalsDelete'
-import {deleteBook, borrowBook, postBorrow, putBorrow, postOrder} from '../utils/http'
-import Loading from '../images/loading.gif'
-import {connect} from 'react-redux'
-import {getBookByIdActionCreator} from '../redux/actions/getBookById'
-import '../styles/Description.css'
-import BackButton from '../images/backbutton.png'
+import React, { Component } from "react";
+import qs from "querystring";
+import { Image } from "react-bootstrap";
+import ModalEdit from "../components/ModalEdit";
+import ModalsDelete from "../components/ModalsDelete";
+import { deleteBook } from "../utils/http";
+import Loading from "../images/loading.gif";
+import { connect } from "react-redux";
+import {
+  getBooksActionCreator,
+  getBookByIdActionCreator,
+  getBookByIdRecommendedActionCreator,
+  borrowBookActionCreator,
+} from "../redux/actions/books";
+import {
+  getBorrowActionCreator,
+  postBorrowActionCreator,
+  putBorrowActionCreator,
+} from "../redux/actions/borrow";
+import "../styles/Description.css";
+import BackButton from "../images/backbutton.png";
 
 class Description extends Component {
-
-    state = {
-        role: atob(localStorage.getItem("role")),
-        email: localStorage.getItem("email"),
-        id_user: localStorage.getItem("id"),
-        data: {}
+  async componentDidMount() {
+    const { books } = this.props.match.params;
+    if (books === `books`) {
+      await this.getBookById();
     }
-
-    componentDidMount() {
-        this.getBookById()
-        localStorage.setItem("lastPage", `/description/${this.props.match.params.id}`)
+    if (books === `recommended`) {
+      await this.getBookByIdRecommended();
     }
+  }
+  getBookById = async () => {
+    const { id } = this.props.match.params;
+    await this.props.getBookByIdAction(id);
+  };
+  getBookByIdRecommended = async () => {
+    const { id } = this.props.match.params;
+    await this.props.getBookByIdRecommendedAction(id);
+  };
 
-    auth = () => {
-          this.props.history.push("/login")
-    }
+  deleteBook = async () => {
+    const { token } = this.props.login;
+    const id = this.props.match.params.id;
+    await deleteBook(id, token);
+  };
 
-    getBookById = async () => {
-        const {id} = this.props.match.params
-        const {token} = this.props.login
-        await this.props.getBookByIdAction(id, token)
-    }
+  borrowBook = async () => {
+    const { id } = this.props.match.params;
+    const { resBookById } = this.props.books;
+    const { email, name } = this.props.login.response;
+    const id_user = this.props.login.response.id;
+    const { token } = this.props.login;
+    const { postBorrowAction, borrowBookAction } = this.props;
+    const { id_status, email_borrow } = this.state;
+    await borrowBookAction(
+      id,
+      qs.stringify({
+        id_status,
+        email_borrow,
+        status: "Unavailable",
+      }),
+      token
+    );
+    await postBorrowAction(
+      qs.stringify({
+        id_book: resBookById.id,
+        id_user,
+        status: 2,
+        title: resBookById.title,
+        image: resBookById.image,
+        email,
+        name,
+        borrow_at: new Date().toISOString(),
+        return_at: new Date().toISOString(),
+      }),
+      token
+    );
+  };
 
-    // getBookById = async () => { 
-    //     const id = this.props.match.params.id
-    //     await getBookById(id)
-    //     .then((response) => {
-    //       this.setState({
-    //         data : response.data.data[0],
-    //         isLoading: true
-    //       })
-    //     })
-    //     .catch((error) => {
-    //         this.setState({
-    //             error: error.response.data.data.message
-    //           })
-    //           if(this.state.error === "TokenExpiredError"){
-    //             this.props.history.push("/token")
-    //           } else if (this.state.error === "JsonWebTokenError") {
-    //             this.props.history.push("/login")
-    //           }
-    //     })
-    // }
+  returnBook = async () => {
+    const { id } = this.props.match.params;
+    const { resBookById } = this.props.books;
+    const id_user = this.props.login.response.id;
+    const { token } = this.props.login;
+    const { putBorrowAction, borrowBookAction } = this.props;
+    const { id_status, email_borrow } = this.state;
+    await borrowBookAction(
+      id,
+      qs.stringify({
+        id_status,
+        email_borrow,
+        status: "Available",
+      }),
+      token
+    );
+    await putBorrowAction(
+      qs.stringify({
+        id_book: resBookById.id,
+        id_user,
+        status: 1,
+        return_at: new Date().toISOString(),
+      }),
+      token
+    );
+  };
 
-    deleteBook = async () => {
-    const id = this.props.match.params.id
-        await deleteBook(id)
-    }
-    
-    borrowBook = async () => {
-        const {token} = this.props.login
-        const {id} = this.props.match.params
-        const {response} = this.props.getBookById
-        await borrowBook(id, qs.stringify({
-            id_status: this.state.id_status,
-            email_borrow: this.state.email_borrow
-        }), token)
-        await postBorrow(qs.stringify({
-            id_book: response.id,
-            id_user: this.props.login.response.id,
-            status: 2
-        }), token)
-        this.getBookById()
-        }
-    
-    returnBook = async () => {
-        const {token} = this.props.login
-        const {id} = this.props.match.params
-        const {response} = this.props.getBookById
-        await borrowBook(id, qs.stringify({
-            id_status: this.state.id_status,
-            email_borrow: this.state.email_borrow
-        }), token)
-        .then((response) => {
-            console.log(response)
-        })
-        .catch((error) => {
-            console.log({error})
-        })
-        await putBorrow(qs.stringify({
-            id_book: response.id,
-            id_user: this.props.login.response.id,
-            status: 1
-        }), token)
-        .then((response) => {
-            console.log(response)
-        })
-        .catch((error) => {
-            console.log({error})
-        })
-        this.getBookById()
-        }
-
-    handleBorrow =  async () => {
-        const {email} = this.props.login.response
-        const {id_status} = this.props.getBookById.response
-        if(id_status === 1) {
-            this.setState({
-                id_status: 2,
-                email_borrow: email,
-                isLoading: false
-            }, () => this.borrowBook())
-        } else {
-            this.setState({
-                id_status: 1,
-                email_borrow: "",
-                isLoading: false
-            }, () => this.returnBook())
-        }
-    }
-
-    postOrder = async () => {
-        const {id} = this.props.match.params
-        await postOrder(qs.stringify({
-            id_book: id,
-            id_user: this.props.login.response.id,
-        }))
-        this.getBookById()
-    }
-
-    render() {
-        const {isLoading, isFulfilled, isRejected, response} = this.props.getBookById
-        const {role, email} = this.props.login.response
-        const {id} = this.props.match.params
-           return (
-            <>
-                {!isLoading && isFulfilled ? <div className="value">
-                <Image className="top-cover" src={`${process.env.REACT_APP_URL}/${response.image}`} fluid/>
-                <Image className="cover" src={`${process.env.REACT_APP_URL}/${response.image}`}/>
-                <Image className="back-button" src={BackButton} onClick={() => this.props.history.push("/")}></Image>
-                {role === 1 ? <ModalEdit data={response} id={id} getBookById={this.getBookById}/> : <></>}
-                {role === 1 ? <ModalsDelete delete={this.deleteBook} history={this.props.history}/> : <></>}
-                <div className="badge-novel">{response.genre}</div>
-                {response.id_status === 1 ? <div className="status">{response.status}</div> : <div className="status-red">{response.status}</div>}
-                <div className="detail">
-                    <div className="title">{response.title}</div> 
-                    <div className="description">{response.description}</div>
-                </div>
-                {response.id_status === 1 && role === 2 ? <div className="badge-borrow" onClick={this.handleBorrow}>Borrow</div> : response.id_status === 2 && response.email_borrow === email ? <div className="badge-return" onClick={this.handleBorrow}>Return</div> : role === 2 ? <div className="badge-return" onClick={this.postOrder}>Order</div> : <></>}
-                </div> : <img src={Loading} alt="loading" style={{display: "block", margin: "auto"}}></img>}
-                {isRejected ? this.auth() : ""}
-            </>
-        )
-    }
-}
-
-const mapStateToProps = ({
-    login,
-    getBookById,
-}) => {
-    return {
-        login,
-        getBookById,
-    }
-}
-
-const mapDispatchToProps= (dispatch) => {
-    return {
-        getBookByIdAction: (id, headers) => {
-            dispatch(getBookByIdActionCreator(id, headers))
+  handleBorrow = async () => {
+    const { email } = this.props.login.response;
+    const { id_status } = this.props.books.resBookById;
+    if (id_status === 1) {
+      this.setState(
+        {
+          id_status: 2,
+          email_borrow: email,
+          isLoading: false,
         },
+        () => this.borrowBook()
+      );
+    } else {
+      this.setState(
+        {
+          id_status: 1,
+          email_borrow: "",
+          isLoading: false,
+        },
+        () => this.returnBook()
+      );
     }
+  };
+
+  render() {
+    const { isLoading, isFulfilled, resBookById } = this.props.books;
+    const { role, email } = this.props.login.response;
+    const { id } = this.props.match.params;
+    return (
+      <>
+        {!isLoading && isFulfilled && resBookById ? (
+          <div className="value">
+            <Image
+              className="top-cover"
+              src={`${process.env.REACT_APP_URL}/${resBookById.image}`}
+              fluid
+            />
+            <Image
+              className="cover"
+              src={`${process.env.REACT_APP_URL}/${resBookById.image}`}
+            />
+            <Image
+              className="back-button"
+              src={BackButton}
+              onClick={() => this.props.history.push("/")}
+            ></Image>
+            {role === 1 ? (
+              <ModalEdit
+                data={resBookById}
+                id={id}
+                getBookById={this.getBookById}
+              />
+            ) : (
+              <></>
+            )}
+            {role === 1 ? (
+              <ModalsDelete
+                delete={this.deleteBook}
+                history={this.props.history}
+              />
+            ) : (
+              <></>
+            )}
+            <div className="badge-novel">{resBookById.genre}</div>
+            {resBookById.id_status === 1 ? (
+              <div className="status">{resBookById.status}</div>
+            ) : (
+              <div className="status-red">{resBookById.status}</div>
+            )}
+            <div className="detail">
+              <div className="title">{resBookById.title}</div>
+              <div className="author">{resBookById.author}</div>
+              <div className="description">{resBookById.description}</div>
+            </div>
+            {resBookById.id_status === 1 && role === 2 ? (
+              <div className="badge-borrow" onClick={this.handleBorrow}>
+                Borrow
+              </div>
+            ) : resBookById.id_status === 2 &&
+              resBookById.email_borrow === email ? (
+              <div className="badge-return" onClick={this.handleBorrow}>
+                Return
+              </div>
+            ) : role === 2 ? (
+              <div className="badge-return" onClick={this.postOrder}>
+                Order
+              </div>
+            ) : (
+              <></>
+            )}
+          </div>
+        ) : (
+          <img
+            src={Loading}
+            alt="loading"
+            style={{ display: "block", margin: "auto" }}
+          ></img>
+        )}
+      </>
+    );
+  }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Description)
+const mapStateToProps = ({ books, login }) => {
+  return {
+    books,
+    login,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    getBooksAction: () => {
+      dispatch(getBooksActionCreator());
+    },
+    getBookByIdAction: (id) => {
+      dispatch(getBookByIdActionCreator(id));
+    },
+    getBookByIdRecommendedAction: (id) => {
+      dispatch(getBookByIdRecommendedActionCreator(id));
+    },
+    borrowBookAction: (id, body, token) => {
+      dispatch(borrowBookActionCreator(id, body, token));
+    },
+    getBorrowAction: (token) => {
+      dispatch(getBorrowActionCreator(token));
+    },
+    postBorrowAction: (body, token) => {
+      dispatch(postBorrowActionCreator(body, token));
+    },
+    putBorrowAction: (body, token) => {
+      dispatch(putBorrowActionCreator(body, token));
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Description);

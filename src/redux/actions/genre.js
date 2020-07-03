@@ -1,9 +1,35 @@
-import {getGenreAction} from './actionTypes'
-import {getGenre} from '../../utils/http'
+import {
+  getGenreAction,
+  postGenreAction,
+  putGenreAction,
+  deleteGenreAction,
+} from "./actionTypes";
+import { getGenre, postGenre, putGenre, deleteGenre } from "../../utils/http";
 
-export const getGenreActionCreator = (headers) => {
-        return {
-            type: getGenreAction,
-            payload: getGenre(headers)
-        }
-}
+export const getGenreActionCreator = (token) => {
+  return {
+    type: getGenreAction,
+    payload: getGenre(token),
+  };
+};
+
+export const postGenreActionCreator = (body, token) => {
+  return {
+    type: postGenreAction,
+    payload: postGenre(body, token),
+  };
+};
+
+export const putGenreActionCreator = (id, body, token) => {
+  return {
+    type: putGenreAction,
+    payload: putGenre(id, body, token),
+  };
+};
+
+export const deleteGenreActionCreator = (id, token) => {
+  return {
+    type: deleteGenreAction,
+    payload: deleteGenre(id, token),
+  };
+};
