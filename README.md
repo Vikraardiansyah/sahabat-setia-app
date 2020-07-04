@@ -38,7 +38,7 @@ Sahabat Setia is library web application that can borrow your favorite book, you
 </div>
 
 ## Release Web
-[Sahabat Setia](http://54.225.43.18/)
+[`Sahabat Setia`](http://54.225.43.18/)
 
 
 ## Related Project (Backend)
