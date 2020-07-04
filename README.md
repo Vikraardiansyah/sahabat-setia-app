@@ -28,7 +28,13 @@ Sahabat Setia is library web application that can borrow your favorite book, you
 
 ## Screenshots
 <div align="center">
- 
+ <img width="400" src="./ss/home.png">
+ <img width="400" src="./ss/detail1.png">
+ <img width="400" src="./ss/detail2.png">
+ <img width="400" src="./ss/editbook.png">
+ <img width="400" src="./ss/manage.png">
+ <img width="400" src="./ss/history.png">
+ <img width="400" src="./ss/login.png">
 </div>
 
 ## Release Web
